@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Obfuscated Phone Number</title>
+  <style>
+    /* Simulate a custom icon font using regular font-family and content mapping */
+    .phone-number {
+      font-family: 'CustomPhoneFont', sans-serif;
+      font-size: 24px;
+      letter-spacing: 4px;
+    }
+
+    .digit::before {
+      font-family: inherit;
+      display: inline-block;
+    }
+
+    .d-0::before { content: '⓪'; }
+    .d-1::before { content: '①'; }
+    .d-2::before { content: '②'; }
+    .d-3::before { content: '③'; }
+    .d-4::before { content: '④'; }
+    .d-5::before { content: '⑤'; }
+    .d-6::before { content: '⑥'; }
+    .d-7::before { content: '⑦'; }
+    .d-8::before { content: '⑧'; }
+    .d-9::before { content: '⑨'; }
+  </style>
+</head>
+<body>
+
+<h2>Rendered Phone Number:</h2>
+
+<div class="phone-number" aria-label="9876543210">
+  <span class="digit d-9"></span>
+  <span class="digit d-8"></span>
+  <span class="digit d-7"></span>
+  <span class="digit d-6"></span>
+  <span class="digit d-5"></span>
+  <span class="digit d-4"></span>
+  <span class="digit d-3"></span>
+  <span class="digit d-2"></span>
+  <span class="digit d-1"></span>
+  <span class="digit d-0"></span>
+</div>
+
+</body>
+</html>
