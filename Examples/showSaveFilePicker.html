@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>showSaveFilePicker Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
+    textarea { width: 100%; height: 180px; }
+    button { padding: .6rem 1rem; margin-right: .5rem; }
+    .hint { color: #555; margin-top: .5rem; }
+    .status { margin-top: 1rem; }
+    code { background: #f6f8fa; padding: .1rem .3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>showSaveFilePicker Demo</h1>
+  <p>Type something and click <strong>Save as .txt</strong> or <strong>Save as .json</strong>.</p>
+
+  <textarea id="text" placeholder="Write your content here...">Hello from showSaveFilePicker 👋</textarea>
+  <div style="margin-top: .75rem;">
+    <button id="saveTxt">Save as .txt</button>
+    <button id="saveJson">Save as .json</button>
+  </div>
+
+  <p class="hint">
+    Note: <code>showSaveFilePicker</code> works in Chromium-based browsers (Chrome, Edge) on HTTPS origins.
+    This page will auto-fallback to a regular download if unsupported.
+  </p>
+
+  <pre id="status" class="status"></pre>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const textEl = document.getElementById('text');
+
+    function log(msg) { statusEl.textContent = msg; }
+
+    // Fallback: trigger a classic download via an <a download> link
+    function fallbackDownload({ data, filename = 'download.txt', type = 'text/plain' }) {
+      const blob = new Blob([data], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      log('Saved with fallback download.');
+    }
+
+    async function saveWithPicker({ data, suggestedName, typeDesc, mime, extensions }) {
+      if (!('showSaveFilePicker' in window)) {
+        // No support → fallback
+        return fallbackDownload({
+          data,
+          filename: suggestedName || 'download.txt',
+          type: mime || 'text/plain'
+        });
+      }
+
+      try {
+        // 1) Ask user where to save
+        const handle = await window.showSaveFilePicker({
+          suggestedName,
+          types: [{
+            description: typeDesc,
+            accept: { [mime]: extensions }
+          }],
+          // startIn: 'documents' // (optional) may be ignored on some platforms
+        });
+
+        // 2) Create a writable stream
+        const writable = await handle.createWritable();
+
+        // 3) Write data (string, Blob, ArrayBuffer, etc.)
+        await writable.write(data);
+
+        // 4) Close the file and persist to disk
+        await writable.close();
+
+        log(`Saved successfully to: ${handle.name}`);
+      } catch (err) {
+        // User clicked "Cancel" → AbortError, or permission issue, etc.
+        if (err && (err.name === 'AbortError' || err.name === 'NotAllowedError')) {
+          log('Save cancelled.');
+        } else {
+          console.error(err);
+          log('Save failed: ' + (err && err.message ? err.message : err));
+        }
+      }
+    }
+
+    // Save as plain text
+    document.getElementById('saveTxt').addEventListener('click', () => {
+      const data = textEl.value;
+      saveWithPicker({
+        data,
+        suggestedName: 'note.txt',
+        typeDesc: 'Plain Text',
+        mime: 'text/plain',
+        extensions: ['.txt']
+      });
+    });
+
+    // Save as JSON (pretty-printed)
+    document.getElementById('saveJson').addEventListener('click', () => {
+      const obj = { savedAt: new Date().toISOString(), content: textEl.value };
+      const data = JSON.stringify(obj, null, 2);
+      saveWithPicker({
+        data,
+        suggestedName: 'data.json',
+        typeDesc: 'JSON',
+        mime: 'application/json',
+        extensions: ['.json']
+      });
+    });
+  </script>
+</body>
+</html>
